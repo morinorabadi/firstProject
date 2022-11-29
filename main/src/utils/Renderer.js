@@ -11,7 +11,7 @@ export default class Renderer
         this.renderer.setClearColor(new THREE.Color("#111"))
     }
     resize(sizes){
-
+        this.renderer.setSize(window.innerWidth, window.innerHeight)
     }
     render(){
         this.renderer.render(this.scene,this.camera)

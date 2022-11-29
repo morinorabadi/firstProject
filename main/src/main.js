@@ -7,10 +7,11 @@ import Charater from './utils/character'
 import World from './utils/world'
 import Renderer from './utils/Renderer';
 import AssetsLoader from './utils/AssetsLoader'
+import Controller from './utils/Controll'
 
 console.log("start");
 
-const redlibcore = new redlib.RedLib({})
+const redlibcore = new redlib.RedLib({fps : 60})
 
 /**
  * create asset loader 
@@ -47,6 +48,13 @@ const charater = new Charater(assetLoader,redlibcore)
 // add charater to world
 world.scene.add(charater.group)
 
+// create controller
+const controller = new Controller(
+    redlibcore,
+    (direction) => { charater.setDirection(direction) },
+    () => { charater.setDirectionEnd() },
+)
+
 /**
  * setup renderer
  */
@@ -56,8 +64,7 @@ const renderer = new Renderer(world.scene,charater.camera)
 
 // testing postion
 charater.group.position.set(20,0,0)
-charater.camera.position.set(0,20,0)
-charater.camera.lookAt(new THREE.Vector3(20,0,0))
+
 
 /**
  * Helpers
@@ -75,7 +82,6 @@ world.scene.add( axesHelper )
  */
 // process event
 redlibcore.globalEvent.addCallBack("process", (delta) => {
-    // charater.group.rotation.y += delta / 5000
 
     // update controll
     // controls.update()
@@ -85,7 +91,7 @@ redlibcore.globalEvent.addCallBack("process", (delta) => {
 })
 
 // resize event
-// redlibcore.globalEvent.addCallBack("resize", (sizes) => {
-//     console.log("resize");
-//     console.log(sizes);
-// })
+redlibcore.globalEvent.addCallBack("resize", (sizes) => {
+    charater.resize(sizes)
+    renderer.resize(sizes)
+})

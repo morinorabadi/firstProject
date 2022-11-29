@@ -55,9 +55,9 @@ export default class World
                 (Math.random() - 0.5) * 50,
             ).normalize()
 
-            vertexes[i*3 + 0] = vertex.x  *  100  * (Math.random() * 0.2  + 0.8 ) 
-            vertexes[i*3 + 1] = vertex.y  *  100  * (Math.random() * 0.2  + 0.8 )
-            vertexes[i*3 + 2] = vertex.z  *  100  * (Math.random() * 0.2  + 0.8 )
+            vertexes[i*3 + 0] = vertex.x  *  180  * (Math.random() * 0.2  + 0.8 ) 
+            vertexes[i*3 + 1] = vertex.y  *  60  * (Math.random() * 0.2  + 0.8 )
+            vertexes[i*3 + 2] = vertex.z  *  180  * (Math.random() * 0.2  + 0.8 )
         }
         
         const geometry = new THREE.BufferGeometry()
