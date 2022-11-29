@@ -1,7 +1,6 @@
 import './style.sass'
 
-import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import gsap from 'gsap'
 
 import Charater from './utils/character'
 import World from './utils/world'
@@ -9,9 +8,9 @@ import Renderer from './utils/Renderer';
 import AssetsLoader from './utils/AssetsLoader'
 import Controller from './utils/Controll'
 
-console.log("start");
-
 const redlibcore = new redlib.RedLib({fps : 60})
+
+
 
 /**
  * create asset loader 
@@ -53,13 +52,13 @@ const controller = new Controller(
  */
 const renderer = new Renderer(world.scene,charater.camera)
 
+const explorebutton = document.querySelector('.explore')
+explorebutton.addEventListener('click', () => {
+    gsap.to( explorebutton , { duration : 0.5 , opacity : 0 })
+    charater.active()
+    world.active()
+})
 
-/**
- * Helpers
- */
-
-// controll
-// const controls = new OrbitControls( charater.camera, document.body )
 
 /**
  * adding events

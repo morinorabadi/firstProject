@@ -5,6 +5,8 @@ export default class World
     constructor(assetsLoader,redlibcore){
         // main scene
         this.scene = new THREE.Scene()
+        
+        this.isActive = false
 
         // create group for planets
         this.planets = new THREE.Group()
@@ -41,13 +43,17 @@ export default class World
 
 
     }
+    active(){
+        this.isActive = true
+    }
     process(delta){
-        // this.planets.rotation.y += delta * 0.0001
-        // this.stars.rotation.y += delta * 0.0005
+        if ( !this.isActive ){
+            this.stars.rotation.y -= delta * 0.0005
+        }
         this.earch.rotation.y += delta * 0.0001
-        this.mars.rotation.y += delta * 0.00015
+        this.mars.rotation.y -= delta * 0.00015
         this.venus.rotation.y += delta * 0.0002
-        this.mercury.rotation.y += delta * 0.00022
+        this.mercury.rotation.y -= delta * 0.00022
     }
 
     // add some light
