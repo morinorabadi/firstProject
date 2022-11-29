@@ -27,12 +27,10 @@ import InputConverter from './utils/InputConverter'
  * touchDrag    -> none
  * touchMove    -> Vector2  base on screen result is allwasy between -1 and 1
  * touchStart   -> Vector2  base on screen result is allwasy between -1 and 1
- * touchStart   -> Vector2  base on screen result is allwasy between -1 and 1
  * touchEnd     -> none
  * 
  * ------------------
  */
-
 
 class RedLib{
     constructor(options={}){

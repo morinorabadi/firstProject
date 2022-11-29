@@ -1,6 +1,6 @@
 /**
  * this class design to load and manage assets
- * like texture and gltf files
+ * like texture and gltf and audio files
  * 
  * load objects shouuld be like this
  * {
@@ -8,17 +8,19 @@
  *     objects : [
  *         {type : "texture", src : "...", loadOver : texture => {} },
  *         {type : "gltf"   , src : "...", loadOver : gltf    => {} }
- *         {type : "audio"  , src : "...", loadOver : Howl    => {} }
+ *         {type : "audio"  , src : "...", loadOver : audio   => {} }
  *     ]
  * }
  */
+import * as THREE from 'three'
+import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
 export default class AssetsLoader{
     constructor(){
         this.manager = new THREE.LoadingManager(undefined,undefined,
             (url) => {console.log("opss we cant load ",url)}
         )
         this.textureLoader = new THREE.TextureLoader(this.manager)
-        this.GltfLoader = new THREE.GLTFLoader(this.manager)
+        this.GltfLoader = new GLTFLoader(this.manager)
     }
     load(task){
         task.objects.forEach(object => { object.isloaded = false })
