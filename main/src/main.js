@@ -16,19 +16,12 @@ const redlibcore = new redlib.RedLib({fps : 60})
 /**
  * create asset loader 
  */
- const assetLoader = new AssetsLoader()
+const assetLoader = new AssetsLoader()
 
 /**
  * creating world
  */
-const world = new World()
-
-// create planet
-world.planetGenerator(3, new THREE.Vector3(30,0,0))
-world.planetGenerator(2, new THREE.Vector3(0,5,20))
-world.planetGenerator(2.5, new THREE.Vector3(-10,3,-20))
-// world.planetGenerator(0.8, new THREE.Vector3(5,-2,-6))
-// world.planetGenerator(1, new THREE.Vector3(-5,2,6))
+const world = new World(assetLoader,redlibcore)
 
 
 // create stars
@@ -61,18 +54,9 @@ const controller = new Controller(
 const renderer = new Renderer(world.scene,charater.camera)
 
 
-
-// testing postion
-charater.group.position.set(20,0,0)
-
-
 /**
  * Helpers
  */
-
-// axesHelper
-const axesHelper = new THREE.AxesHelper(50)
-world.scene.add( axesHelper )
 
 // controll
 // const controls = new OrbitControls( charater.camera, document.body )

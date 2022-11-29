@@ -35,7 +35,7 @@ export default class Charater
             ]
         })
         this.cameraGroup = new THREE.Group()
-        this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 0.1, 500)
+        this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 1, 700)
         this.cameraGroup.add(this.camera)
         this.group.add(this.cameraGroup)
         this.camera.position.set(0,5,10)
@@ -54,6 +54,8 @@ export default class Charater
 
             CameraRotate : 0,
         }
+
+        this.group.position.set(150,0,0)
         
     }
 

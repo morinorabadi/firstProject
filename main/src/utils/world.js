@@ -2,45 +2,115 @@ import * as THREE from 'three'
 
 export default class World
 {
-    constructor(){
+    constructor(assetsLoader,redlibcore){
         // main scene
         this.scene = new THREE.Scene()
 
+        // create group for planets
+        this.planets = new THREE.Group()
+        this.scene.add(this.planets)
+        this.planetGenerator()
+
+        // create group for starts
+        this.stars = new THREE.Group()
+        this.scene.add(this.stars)
+
+
         this.createLight()
+
+        // load sun texture and create sun it self
+        assetsLoader.load({
+            loadOver : () => {},
+            objects : [
+                {type : "texture", src : "assets/sun.jpeg", loadOver : texture => { 
+                    texture.wrapS = THREE.RepeatWrapping
+                    texture.wrapT = THREE.RepeatWrapping
+                    texture.repeat.set( 4, 4 )
+                    this.scene.add(
+                        new THREE.Mesh(
+                            new THREE.SphereGeometry(6,64,64), 
+                            new THREE.MeshBasicMaterial({ color : '#ffbc57', map : texture })
+                        )
+                    )
+                 } },
+            ]
+        })
+
+        // add process evet dor rotate planet an stars
+        redlibcore.globalEvent.addCallBack('process', (delta) => { this.process(delta) })
+
+
+    }
+    process(delta){
+        // this.planets.rotation.y += delta * 0.0001
+        // this.stars.rotation.y += delta * 0.0005
+        this.earch.rotation.y += delta * 0.0001
+        this.mars.rotation.y += delta * 0.00015
+        this.venus.rotation.y += delta * 0.0002
+        this.mercury.rotation.y += delta * 0.00022
     }
 
     // add some light
     createLight(){
-        const ambientLight = new THREE.AmbientLight("#bdfff0",0.3)
+        const ambientLight = new THREE.AmbientLight("#bdfff0",0.5)
 
-        const sun = new THREE.PointLight('#fffd7d', 3, 50, 1.2)
-        const sunMesh = new THREE.Mesh(
-            new THREE.SphereGeometry(5,64,64), 
-            new THREE.MeshBasicMaterial({ color : '#ffbc57' })
-        )
-        
-        const directionalLight = new THREE.DirectionalLight("#fff",0.5)
+        const sun = new THREE.PointLight('#fffd7d', 1, 150,1.5)
+
+        const directionalLight = new THREE.DirectionalLight("#fff",0.4)
         directionalLight.position.set(1,1,1 )
-        this.scene.add(sun,sunMesh,ambientLight,directionalLight)
+        
+        this.scene.add(sun,ambientLight,directionalLight)
     }
 
     // Planet generator
-    planetGenerator(radius,position,color,texture){
-        const geometry = new THREE.SphereGeometry(radius,32,32)
-        const material = new THREE.MeshStandardMaterial({
-            color : 'white',
-        })
+    planetGenerator(){
+        this.earch = new THREE.Group()
+        const earchMesh = new THREE.Mesh( 
+            new THREE.SphereGeometry(3,32,32),
+            new THREE.MeshStandardMaterial({
+                color : '#17fff7',
+            })
+        )
+        earchMesh.position.set(25,0,0)
 
-        if (texture){material.texture = texture}
-        if (color){material.color =  new THREE.Color(color)}
-        
-        const mesh = new THREE.Mesh( geometry, material)
-        if (position) {
-            mesh.position.set(position.x,position.y,position.z)
-        }
+        this.earch.add(earchMesh)
+        this.planets.add(this.earch)
 
-        this.scene.add(mesh)
+        this.mercury = new THREE.Group()
+        const mercuryMesh = new THREE.Mesh( 
+            new THREE.SphereGeometry(1,32,32),
+            new THREE.MeshStandardMaterial({
+                color : '#ff9317',
+            })
+        )
+        mercuryMesh.position.set(10,4,0)
 
+        this.mercury.add(mercuryMesh)
+        this.planets.add(this.mercury)
+
+        this.mars = new THREE.Group()
+        const marsMesh = new THREE.Mesh( 
+            new THREE.SphereGeometry(6,32,32),
+            new THREE.MeshStandardMaterial({
+                color : '#ff9317',
+            })
+        )
+        marsMesh.position.set(50,-5,0)
+
+        this.mars.add(marsMesh)
+        this.planets.add(this.mars)
+
+        this.venus = new THREE.Group()
+        const venusMesh = new THREE.Mesh( 
+            new THREE.SphereGeometry(5,32,32),
+            new THREE.MeshStandardMaterial({
+                color : '#96fff3',
+            })
+        )
+        venusMesh.position.set(75,-5,0)
+
+        this.venus.add(venusMesh)
+        this.planets.add(this.venus)
     }
 
     // star generator
@@ -67,7 +137,7 @@ export default class World
             color : color,
             size : size,
         })
-        const starts = new THREE.Points(geometry,material)
-        this.scene.add(starts)
+
+        this.stars.add(new THREE.Points(geometry,material))
     }
 }
