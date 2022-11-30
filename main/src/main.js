@@ -7,6 +7,7 @@ import World from './utils/world'
 import Renderer from './utils/Renderer';
 import AssetsLoader from './utils/AssetsLoader'
 import Controller from './utils/Controll'
+import Audios from './utils/audio';
 
 const redlibcore = new redlib.RedLib({fps : 60})
 
@@ -18,24 +19,29 @@ const redlibcore = new redlib.RedLib({fps : 60})
 const assetLoader = new AssetsLoader()
 
 /**
+ * global Audio Class
+ */
+const globalAudio = new Audios(assetLoader)
+
+/**
  * creating world
  */
-const world = new World(assetLoader,redlibcore)
+const world = new World(assetLoader,redlibcore,globalAudio)
 
 
 // create stars
 const startInfo = [
-    [5000,0.4,"#fff"],
-    [100,0.4,"#e570ff"],
-    [1000,0.6,"#f0f"],
-    [300,0.5,"#fff"]
+    [8000,0.5,"#fff"],
+    [1000,0.6,"#e570ff"],
+    [1000,0.8,"#f0f"],
+    [3000,0.5,"#fff"]
 ]
 startInfo.forEach(info => {world.createStar(info[0],info[1],info[2])})
 
 /**
  * create charater
  */
-const charater = new Charater(assetLoader,redlibcore)
+const charater = new Charater(assetLoader,redlibcore,globalAudio)
 
 // add charater to world
 world.scene.add(charater.group)

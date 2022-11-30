@@ -5,7 +5,7 @@ import gsap from 'gsap'
 
 export default class Charater
 {
-    constructor(assetsLoader,redlibcore){
+    constructor(assetsLoader,redlibcore,audioClass){
         this.group = new THREE.Group()
         this.charater = new THREE.Group() 
         this.isActive = false
@@ -14,9 +14,22 @@ export default class Charater
 
             },
             objects : [
+                {type : "audio"  , src : "assets/audios/spaseShip.mp3", loadOver : audio   => {
+                    this.audio = audio
+                    this.audio._loop = true
+                    this.audio.volume(0.4)
+                    this.audio.rate(0.8)
+                    this.audio.play()
+                } },
                 {type : "gltf"   , src : "/assets/spaseShip.glb", loadOver : gltf    => {
                     this.charater.add(gltf.scene)
                     this.group.add(this.charater)
+                    setInterval( () => {
+                        const targrt = new THREE.Vector3()
+                        this.charater.getWorldPosition(targrt)
+                        audioClass.updatePosition("character",targrt)
+                        
+                    }, 250)
                     gltf.scene.children.forEach( mesh => {
                         mesh.material = new THREE.MeshBasicMaterial({ color : 'red' })
                         switch (mesh.name) {
@@ -40,8 +53,6 @@ export default class Charater
         this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 1, 700)
         this.cameraGroup.add(this.camera)
         this.group.add(this.cameraGroup)
-        // this.camera.position.set(0,5,10)
-        // this.camera.lookAt(new THREE.Vector3(0,0,0))
         this.camera.position.set(10,1,-1.5)
         this.camera.lookAt(new THREE.Vector3(0,0,0))
         
@@ -59,7 +70,7 @@ export default class Charater
             CameraRotate : Math.PI / 2,
         }
 
-        this.group.position.set(180,0,0)
+        this.group.position.set(220,0,0)
         
     }
 
@@ -76,19 +87,10 @@ export default class Charater
                 this.charater.rotation.y = lerp(this.moveInfo.CameraRotate,this.charater.rotation.y,0.4)
             }
             })
-        // gsap.to( this.group.rotation, {
-        //     duration : 1,
-        //     y : Math.PI / 2
-        // }  )
         gsap.to( this.group.position, { 
             duration : 1,
-            x : 110,
-            onComplete : () => {
-                
-            }
+            x : 150,
         })
-        // this.camera.position.set(0,5,10)
-        // this.camera.lookAt(new THREE.Vector3(0,0,0))
     }
 
 
@@ -113,10 +115,14 @@ export default class Charater
             this.moveInfo.forseMove = true
             if ( this.moveInfo.speed < this.moveInfo.maxSpeed ) {
                 this.moveInfo.speed += delta * 0.00002
+                this.audio.volume((this.moveInfo.speed * 55) + 0.4)
+                this.audio.rate((this.moveInfo.speed * 40) + 0.8)
             }
         } else if (this.moveInfo.forseMove) {
             if (  this.moveInfo.speed > 0 ) {
                 this.moveInfo.speed -= delta * 0.00001
+                this.audio.volume((this.moveInfo.speed * 40) + 0.4)
+                this.audio.rate((this.moveInfo.speed * 40) + 0.8)
             } else {
                 this.moveInfo.forseMove = false
             }
