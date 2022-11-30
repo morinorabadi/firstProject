@@ -9,12 +9,14 @@ import AssetsLoader from './utils/AssetsLoader'
 import Controller from './utils/Controll'
 import Audios from './utils/audio';
 
-const redlibcore = new redlib.RedLib({fps : 60})
-
-
 
 /**
- * create asset loader 
+ * instantiate redlib core
+ */
+const redlibcore = new redlib.RedLib({fps : 60})
+
+/**
+ * create assets loader 
  */
 const assetLoader = new AssetsLoader()
 
@@ -58,9 +60,9 @@ const controller = new Controller(
  */
 const renderer = new Renderer(world.scene,charater.camera)
 
-const explorebutton = document.querySelector('.explore')
-explorebutton.addEventListener('click', () => {
-    gsap.to( explorebutton , { duration : 0.5 , opacity : 0 })
+const exploreButton = document.querySelector('.explore')
+exploreButton.addEventListener('click', () => {
+    gsap.to( exploreButton , { duration : 0.5 , opacity : 0 })
     charater.active()
     world.active()
 })
@@ -70,11 +72,7 @@ explorebutton.addEventListener('click', () => {
  * adding events
  */
 // process event
-redlibcore.globalEvent.addCallBack("process", (delta) => {
-
-    // update controll
-    // controls.update()
-
+redlibcore.globalEvent.addCallBack("process", () => {
     // render scene
     renderer.render()
 })

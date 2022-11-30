@@ -3,6 +3,7 @@ import { Vector3 } from 'three'
 export default class Audios
 {
     constructor(assetsLoader){
+        // store inforamtion about planets and character
         this.objects = {
             character : { position : new Vector3(900,50,100) },
             sun       : { audio : null, position : new Vector3(), distanse : 1200, isPlaying : false },
@@ -12,8 +13,10 @@ export default class Audios
         }
         this.planetsName = ["sun", "earth", "mars", "mercury"]
 
+        // loading inforamtion
         assetsLoader.load({
             loadOver : () => {},
+            // load sound for planet
             objects : [
                 {type : "audio"  , src : "assets/audios/earth.mp3", loadOver : audio => { audio._loop = true; this.objects.earth.audio   = audio } },
                 {type : "audio"  , src : "assets/audios/decore.mp3",loadOver : audio => { audio._loop = true; this.objects.sun.audio     = audio } },
@@ -25,10 +28,12 @@ export default class Audios
         setInterval( () => { this.chechDistance() }, 200 )
     }
 
+    // update world position from other class
     updatePosition(name,position){
         this.objects[name].position = position
     }
 
+    // every 200 milisecends chech distanse between character and planets 
     chechDistance(){
         this.planetsName.forEach(planet => {
             const planetObject = this.objects[planet]
@@ -44,7 +49,6 @@ export default class Audios
 
                 let volume = (planetObject.distanse - distanse) / planetObject.distanse * 2 + 0.2
                 if (volume > 1 ) { volume = 1 }
-                console.log(`near to ${planet} and ${ volume }`);
 
                 planetObject.audio.volume( volume )
 

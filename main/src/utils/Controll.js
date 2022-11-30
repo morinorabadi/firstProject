@@ -17,15 +17,17 @@ export default class Controll
         /**
          * KeyBorad
          */
-        // adding key borad events
+        // store keyboard information
         this.keyBoardInfo = { isActive : false, up : false, down : false, left : false, right : false }
+
+        // adding keyboard events
         document.addEventListener('keydown',( event ) => { this.KeyBoardControll(event,true)})
         document.addEventListener('keyup',( event ) => { this.KeyBoardControll(event,false)})
 
         /**
          * Touch
          */
-        // grap joy svg
+        // store touch information
         this.touchInfo = { isActive: false, CurentDrag : null,start : null }
 
         // adding touch events
@@ -34,9 +36,11 @@ export default class Controll
         redlibcore.globalEvent.addCallBack('touchEnd',   ()      => { this.touchEnd() })
         
     }
+
+    // handele keyboard events
     KeyBoardControll(event,isDown){
         
-
+        // chech wich key is presed or relese
         switch (event.key) {
             case 'w' :
             case 'ArrowUp':
@@ -85,7 +89,7 @@ export default class Controll
             this.direction.x = 0
         }
 
-        // call input callBack is is any direction
+        // call input callBack if thres is any direction
         if ( this.direction.x == 0 && this.direction.y == 0){
             if ( this.keyBoardInfo.isActive ) {
                 this.callInputEventEnd()
@@ -116,10 +120,12 @@ export default class Controll
         this.callInputEventEnd()
     }
 
-    // calculate direction
+    // calculate direction and send out
     callInputEvent(){
         this.event(this.direction.clone().normalize())
     }
+
+    // call when ever input is over
     callInputEventEnd(){
        this.eventEnd()
     }
