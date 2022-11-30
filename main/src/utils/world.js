@@ -66,7 +66,7 @@ export default class World
         }
 
         // rotate planets
-        this.earch.rotation.y += delta * 0.00005
+        this.earth.rotation.y += delta * 0.00005
         this.mars.rotation.y -= delta * 0.00002
         this.venus.rotation.y += delta * 0.00009
         this.mercury.rotation.y -= delta * 0.00003

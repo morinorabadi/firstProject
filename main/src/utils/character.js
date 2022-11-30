@@ -25,7 +25,7 @@ export default class Charater
                     this.audio.play()
                 } },
                 // charater 3m model 
-                {type : "gltf"   , src : "/assets/spaseShip.glb", loadOver : gltf    => {
+                {type : "gltf"   , src : "assets/spaseShip.glb", loadOver : gltf    => {
                     this.charater.add(gltf.scene)
                     this.group.add(this.charater)
 
