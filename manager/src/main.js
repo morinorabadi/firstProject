@@ -30,5 +30,17 @@ socket.on("connect_error", () => {
 });
 
 
+/**
+ * instantiate create react UI
+ */
+// reactUI.render()
 
-reactUI.render()
+/**
+ * instantiate redlib core
+ */
+const redlibcore = new redlib.RedLib({fps : 60})
+
+/**
+ * instantiate main scene
+ */
+const scene = new main.Scene(redlibcore)

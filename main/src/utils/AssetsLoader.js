@@ -14,6 +14,8 @@
  */
 import * as THREE from 'three'
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader'
+import {Howl} from 'howler'
+
 export default class AssetsLoader{
     constructor(){
         this.manager = new THREE.LoadingManager(undefined,undefined,

@@ -8,7 +8,7 @@ export default class Renderer
         this.camera = camera
 
         // setup rendere
-        this.renderer = new THREE.WebGLRenderer({canvas : document.querySelector('canvas')})
+        this.renderer = new THREE.WebGLRenderer({canvas : document.getElementById('canvasMain')})
         this.renderer.setSize(window.innerWidth,window.innerHeight)
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         this.renderer.setClearColor(new THREE.Color("#111"))
