@@ -5,7 +5,7 @@ import { io } from 'socket.io-client'
  * setup socket
  */
 // init
-socketStates = {
+const socketStates = {
     connected : false,
 }
 
@@ -14,14 +14,14 @@ window.socket = io("http://localhost:3000")
 // connect event
 socket.on("connect", () => {
     console.log("connected-- id : ",socket.id);
-    states.connected = true
+    socketStates.connected = true
 })
 
 // disconnect event
 socket.on("disconnect", () => {
     console.log("disconnect try to reconnect ")
     states.connected = false
-    socket.connect();
+    socketStates.connect();
 });
 
 // connect_error error
