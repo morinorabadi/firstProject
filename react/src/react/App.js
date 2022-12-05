@@ -64,7 +64,7 @@ export default function App() {
     // new player join
     socket.on("server-new-player-join", response => {
       if ( response.status === 200 ) {
-        alert(`${response.player.username} join to room`)
+        console.log(`${response.player.username} join to room`)
       }
     })
 

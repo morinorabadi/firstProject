@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const Room = require('./Room');
 
 class User
 {
@@ -10,7 +11,6 @@ class User
         this.id = uuidv4()
         this.username = null
         this.room = null
-
         // add "set-username" event
         this.socket.on("set-username", (username) => {this.setUsername(username)})
 
@@ -24,6 +24,17 @@ class User
         // join
         this.socket.on("join-room", (roomId) => {this.joinRoom(roomId)})
 
+        /**
+         * Game events
+         */
+        // load over
+        this.socket.on("load-over", (playerGameId) => { this.room.worldLoadOver(playerGameId) })
+
+        // update game info
+        this.socket.on("ugi", (data) => {
+            this.room.updatePlayerInfo(data)
+        })
+        
     }
     // send back error
     sendError(status, message){
@@ -45,7 +56,7 @@ class User
         }
     }
     /**
-     * room fucntions
+     * room functions
      */
     createRoom(roomName){
         this.room = this.manager.createRoom(roomName,this)
@@ -67,8 +78,15 @@ class User
             status : 200,
             room : this.room.serialize()
         })
+        this.io.to(this.socket.id).emit("server-create-world",{
+            status : 200,
+            baseWorldData : this.room.world.baseWorld,
+            playerGameId : this.room.generatePlayerId(this.id)
+        })
     }
-
+    /**
+     * global functions
+     */
     serialize(){
         return {
             id : this.id,

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 
 export default class Renderer
 {
-    constructor(scene,camera){
+    constructor(redlibcore,scene,camera){
         // store params
         this.scene = scene
         this.camera = camera
@@ -12,6 +12,10 @@ export default class Renderer
         this.renderer.setSize(window.innerWidth,window.innerHeight)
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         this.renderer.setClearColor(new THREE.Color("#111"))
+
+        // add events
+        redlibcore.globalEvent.addCallBack("process", () => {this.render()})
+        redlibcore.globalEvent.addCallBack("resize", (sizes) => {this.resize(sizes)})
     }
 
     // handele resize event

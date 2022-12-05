@@ -33,7 +33,7 @@ socket.on("connect_error", () => {
 /**
  * instantiate create react UI
  */
-// reactUI.render()
+reactUI.render()
 
 /**
  * instantiate redlib core

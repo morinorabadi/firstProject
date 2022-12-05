@@ -1,72 +1,34 @@
 import * as THREE from 'three'
 import { lerp } from 'three/src/math/MathUtils'
 
-import gsap from 'gsap'
-
-export default class Charater
+export default class UserCharater
 {
-    constructor(assetsLoader,redlibcore,audioClass){
+    constructor(redlibcore,charater,audio){
         this.group = new THREE.Group()
-        this.charater = new THREE.Group() 
         this.isActive = false
 
-        // loading information
-        assetsLoader.load({
-            loadOver : () => {
-
-            },
-            objects : [
-                // spaseShip audio
-                {type : "audio"  , src : "assets/audios/spaseShip.mp3", loadOver : audio   => {
-                    this.audio = audio
-                    this.audio._loop = true
-                    this.audio.volume(0.3)
-                    this.audio.rate(0.8)
-                    this.audio.play()
-                } },
-                // charater 3m model 
-                {type : "gltf"   , src : "assets/spaseShip.glb", loadOver : gltf    => {
-                    this.charater.add(gltf.scene)
-                    this.group.add(this.charater)
-
-                    // send out world position every 200 milisecends
-                    setInterval( () => {
-                        const targrt = new THREE.Vector3()
-                        this.charater.getWorldPosition(targrt)
-                        audioClass.updatePosition("character",targrt)
-                        
-                    }, 200)
-                    gltf.scene.children.forEach( mesh => {
-
-                        // adding material to 3d model 
-                        switch (mesh.name) {
-                            case "black":
-                                mesh.material = new THREE.MeshStandardMaterial({ color : '#222' })
-                                break;
-
-                            case "white":
-                                mesh.material = new THREE.MeshStandardMaterial({ color : '#ccc' })
-                                break;
-
-                            case "blue":
-                                mesh.material = new THREE.MeshStandardMaterial({ color : '#12a4ff' })
-                                break;
-                        }
-                    });
-                } }
-            ]
-        })
+        // charater
+        this.charater = charater 
+        this.group.add(this.charater)
+        this.playerGameId = null
+        // audio
+        this.audio = audio
+        this.audio._loop = true
+        this.audio.volume(0.3)
+        this.audio.rate(0.8)
+        // this.audio.play()
 
         // setup camera and camera group
         this.cameraGroup = new THREE.Group()
-        this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 1, 700)
+        this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 1, 200)
         this.cameraGroup.add(this.camera)
         this.group.add(this.cameraGroup)
-        this.camera.position.set(10,1,-1.5)
+        this.camera.position.set(0,15,18)
         this.camera.lookAt(new THREE.Vector3(0,0,0))
         
         // adding process event for update position
         redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
+        redlibcore.globalEvent.addCallBack('resize', () => { this.resize() })
 
         // store every inforamtion about move
         this.moveInfo = {
@@ -80,32 +42,12 @@ export default class Charater
             CameraRotate : Math.PI / 2,
         }
 
-        this.group.position.set(220,0,0)
-
     }
-
-    // active inputs and do first animation
     active(){
         this.isActive = true
-        gsap.to( this.camera.position , { 
-            duration : 1,
-            x : 0,
-            y : 3 ,
-            z : 10,
-            onUpdate : () => {
-                this.camera.lookAt(this.group.position)
-                this.cameraGroup.rotation.y = lerp(this.moveInfo.CameraRotate,this.cameraGroup.rotation.y,0.85)
-                this.charater.rotation.y = lerp(this.moveInfo.CameraRotate,this.charater.rotation.y,0.4)
-            }
-            })
-        gsap.to( this.group.position, { 
-            duration : 1,
-            x : 150,
-        })
     }
-
     // handele resize events
-    resize(sizes){
+    resize(){
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
     }
@@ -124,8 +66,20 @@ export default class Charater
 
     // handele input events
     updatePosition(delta){
-        // chech if this section is active
-        if (!this.isActive) { return }
+        if (this.playerGameId){
+            // send out user position for other player
+            socket.volatile.emit("ugi", { 
+                px : this.group.position.x,
+                pz : this.group.position.z,
+                ry : this.charater.rotation.y,
+                // fix global clock 
+                t  : Date.now(),
+                pi : this.playerGameId
+            })
+        }
+
+        // chech if is active
+        if (!this.isActive){ return }
 
         // handele speed of spaseShip
         if ( this.moveInfo.isActive ){
@@ -159,11 +113,9 @@ export default class Charater
 
             // store CameraRotate
             this.moveInfo.CameraRotate += direction.x * delta * this.moveInfo.speed * 0.2
-
             // rotate camera and charater
             this.cameraGroup.rotation.y = lerp(this.moveInfo.CameraRotate,this.cameraGroup.rotation.y,0.85)
             this.charater.rotation.y = lerp(this.moveInfo.CameraRotate,this.charater.rotation.y,0.4)
-
             // move charater base on "CameraRotate" and "speed"
             const direction1 = this.moveInfo.direction.clone()
             direction1.rotateAround( new THREE.Vector2(), this.cameraGroup.rotation.y )
@@ -172,6 +124,5 @@ export default class Charater
             this.group.position.z += delta * this.moveInfo.speed * direction1.y
 
         }
-
     }
 }
