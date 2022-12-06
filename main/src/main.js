@@ -84,31 +84,45 @@ class Scene{
                 this.charater.playerGameId = respone.playerGameId
 
                 // create enemys class
-                this.enemys = new Enemy(this.redlibcore,this.charaterModel,respone.playerGameId,this.world.scene)
-
+                this.enemys.init(respone.playerGameId)
 
                 this.loadChecks.isWorldLoad = true
-                if ( this.loadChecks.isCharaterLoad ) {
-                    socket.emit("load-over",this.charater.playerGameId)
-                } else {
-                    // fix character load chech 
-                }
+                
+                // fix character load chech 
+                socket.emit("load-over",this.charater.playerGameId)
+                
             }
         })
 
         // start game event
-        socket.on("server-start-game", () => {
-            this.charater.active()
-            this.enemys.active()
+        socket.on("server-start-game", ( response ) => {
+            if ( response.status == 200 ){
+                this.charater.active()
+                this.enemys.active()
+            }
         })
 
-        // server on new payer join
+        // server on new player join
         socket.on("game-new-player",( response ) => {
             if ( response.status == 200 ){
                 this.enemys.updateEnemys(response.playersGameId)
             }
-            // create Enemy character
-            
+        })
+
+        // game on some player disconnect
+        socket.on("game-player-disconnect",( response ) => {
+            if ( response.status == 200 ){
+                this.enemys.playerLeave(response.playerGameId)
+            }
+        })
+
+        // server room destroyed
+        socket.on("game-room-destroyed",( response )=>{
+            if ( response.status == 200 ){
+                this.charater.deactive()
+                this.enemys.deactive()
+                socket.emit("room-destroyed-done")
+            }
         })
 
         // server update game info  
@@ -116,7 +130,7 @@ class Scene{
             this.enemys.updateGameInfo(gameInfo)
         })
 
-
+        
 
     }
     loadHandeler(section){
@@ -126,6 +140,10 @@ class Scene{
                 this.charater = new UserCharater(this.redlibcore,this.charaterModel,this.spaseShipAudio)
                 this.world.scene.add(this.charater.group)
                 
+                // create enemy class
+                this.enemys = new Enemy(this.redlibcore,this.charaterModel)
+                this.world.scene.add(this.enemys.group)
+
                 // create controller
                 this.controller = new Controller(
                     this.redlibcore,
@@ -139,9 +157,6 @@ class Scene{
                 // chech load
                 this.loadChecks.isCharaterLoad = true
 
-                break;
-        
-            default:
                 break;
         }
     }

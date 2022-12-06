@@ -12,8 +12,7 @@ const io = new Server(server,{cors : {origin : '*'}})
 const manager = new Manager(io)
 
 io.on('connection', socket => {
-    console.log(`user with "${ socket.id }" Id join`)
-    new User(socket,io,manager)
+    manager.newUser(socket)
 })
 
 

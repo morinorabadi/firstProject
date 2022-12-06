@@ -1,37 +1,56 @@
 import * as THREE from 'three'
+import {gsap} from 'gsap'
 
 export default class Enemy
 {
-    constructor(redlibcore, charater,playerGameId,scene){
+    constructor(redlibcore, charater){
         this.group = new THREE.Group()
-        scene.add(this.group)
+        this.charaterModel = charater.clone()
 
-        this.charater = charater.clone()
-
-        this.selfGameId = playerGameId
-        this.isActive = false
-        this.playersObject = {}
-        this.gameInfo = null
         redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
 
     }
+    
+    init(playerGameId){
+        this.selfGameId = playerGameId
+        this.group.clear()
+        this.playersObject = {}
+        this.gameInfo = null
+    }
+
     active(){
         this.isActive = true
     }
+
+    deactive(){
+        this.isActive = false
+    }
+    
     updateEnemys(playersGameId){
-        console.log(playersGameId)
-        console.log(this.selfGameId);
         playersGameId.forEach(id => {
+            // return if player Game id is for this user
             if ( id == this.selfGameId ){ return }
+
+            // return if player Game id already exsit
             else if ( this.playersObject[id] ){ return }
-            const newEnemy = this.charater.clone()
+
+            // create new enemy
+            const newEnemy = this.charaterModel.clone()
             this.group.add(newEnemy)
-            this.playersObject[id] = newEnemy            
+            this.playersObject[id] = newEnemy
+
         })
     }
+    
+    playerLeave(playerGameId){
+        this.group.remove(this.playersObject[playerGameId])
+        delete this.playersObject[playerGameId]
+    }
+    
     updateGameInfo(gameInfo){
         this.gameInfo = gameInfo
     }
+
     updatePosition(delta){
         if ( !this.isActive ) { return }
         /**

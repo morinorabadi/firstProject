@@ -1,20 +1,23 @@
 const { v4: uuidv4 } = require('uuid');
-const Room = require('./Room');
 
 class User
 {
-    constructor(socket,io,manager){
+    constructor(socket,manager){
         this.socket = socket
-        this.io = io
+        this.io = manager.io
         this.manager = manager
         
         this.id = uuidv4()
         this.username = null
         this.room = null
+
+        // disconnecting event
+        this.socket.on("disconnect", () => { this.manager.userDisconnect(this.socket.id) })
+        // this.socket.on("disconnecting", () => { if (this.room) { this.room.leave(this.id) }})
+
         // add "set-username" event
         this.socket.on("set-username", (username) => {this.setUsername(username)})
 
-        
         /**
          * room events
          */
@@ -31,9 +34,10 @@ class User
         this.socket.on("load-over", (playerGameId) => { this.room.worldLoadOver(playerGameId) })
 
         // update game info
-        this.socket.on("ugi", (data) => {
-            this.room.updatePlayerInfo(data)
-        })
+        this.socket.on("ugi", (data) => { this.room.updatePlayerInfo(data) })
+
+        // room-destroyed-done
+        this.socket.on("room-destroyed-done", () => { this.roomForceLeave() })
         
     }
     // send back error
@@ -44,8 +48,8 @@ class User
     setUsername(username){
         if (username){
             this.username = username
-            this.manager.newUser(this.socket.id)
-            this.manager.getAllRooms()
+            this.manager.addUserIdWithOutRoom(this.socket.id)
+            this.manager.updateAllRoomsInfo()
             this.io.to(this.socket.id).emit('server-username-set',{
                 status : 200,
                 username : username
@@ -83,6 +87,13 @@ class User
             baseWorldData : this.room.world.baseWorld,
             playerGameId : this.room.generatePlayerId(this.id)
         })
+    }
+
+    roomForceLeave(){
+        this.socket.leave(this.room.id)
+        this.room = null
+        this.manager.addUserIdWithOutRoom(this.socket.id)
+        this.manager.updateAllRoomsInfo()
     }
     /**
      * global functions

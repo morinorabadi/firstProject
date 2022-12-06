@@ -46,6 +46,10 @@ export default class UserCharater
     active(){
         this.isActive = true
     }
+    deactive(){
+        this.isActive = false
+        this.playerGameId = null
+    }
     // handele resize events
     resize(){
         this.camera.aspect = window.innerWidth / window.innerHeight;
