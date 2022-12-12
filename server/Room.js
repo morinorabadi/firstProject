@@ -49,38 +49,52 @@ class Room
         this.playerGameIdCount++
         const playerGameId = this.playerGameIdCount.toString()
         this.playersGameId[playerGameId] = userId
-        this.gameInfo[playerGameId] = {t : 0}
+        this.gameInfo[playerGameId] = {
+            px : Number(playerGameId) * 3,
+            pz : 0,
+            ry : 0,
+            t : Date.now(),
+            pi : playerGameId
+        }
         return playerGameId
     }
 
-    worldLoadOver(playerGameId){
+    worldLoadOver(socketId,playerGameId,time){
+
+        this.io.to(socketId).emit("server-start-game", {
+            status : 200,
+            serverTime : Date.now(),
+            time : time,
+            position: this.gameInfo[playerGameId]
+        })
+
         if ( !this.isGameStart ){
             this.startGame()
         } else {
             this.io.to(this.id).emit("game-new-player", {
                 status : 200,
-                playersGameId : Object.keys(this.playersGameId)
+                playersGameId : Object.keys(this.playersGameId),
+                position: this.gameInfo[playerGameId]
             })
         }
-        this.io.to(this.id).emit("server-start-game", {
-            status : 200
-        })
     }
     // start game
     startGame(){
         this.isGameStart = true
+
         // store loop id to remove after game over
         this.loopId = setInterval( () => {
             // send out playrs information
-            // fps is 50
-            this.io.to(this.id).emit("sugi",this.gameInfo)
-        },20)
+            // becuse server emit is realiable we
+            // send position on 20 fps 
+            this.io.to(this.id).emit("sugi", Date.now(), this.gameInfo)
+        },25)
     }
 
     // 
     updatePlayerInfo(data){        
         if ( data.t > this.gameInfo[data.pi].t ) {
-            this.gameInfo[data.pi] = data
+            this.gameInfo[data.pi] = data // pi stand for "player id"
         }
     }
 

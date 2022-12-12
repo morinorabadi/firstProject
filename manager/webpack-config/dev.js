@@ -6,7 +6,7 @@ module.exports = merge(
     {
         mode : "development",
         devServer : {
-            port : '8000',
+            port : '9600',
             devMiddleware: {
                 writeToDisk: true,
             }

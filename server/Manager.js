@@ -82,6 +82,8 @@ class Manager
                     // clean up
                     delete room.playersGameId[playerGameId]
 
+                    delete room.gameInfo[playerGameId]
+
                     // delete player from room
                     room.players.splice(playerIdIndex,1)
                 }

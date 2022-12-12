@@ -3,9 +3,12 @@ import {gsap} from 'gsap'
 
 export default class Enemy
 {
-    constructor(redlibcore, charater){
+    constructor(redlibcore, charater, getClock){
         this.group = new THREE.Group()
         this.charaterModel = charater.clone()
+
+        // clock
+        this.getClock = getClock
 
         redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
 
@@ -15,7 +18,6 @@ export default class Enemy
         this.selfGameId = playerGameId
         this.group.clear()
         this.playersObject = {}
-        this.gameInfo = null
     }
 
     active(){
@@ -26,7 +28,7 @@ export default class Enemy
         this.isActive = false
     }
     
-    updateEnemys(playersGameId){
+    updateEnemys(playersGameId,position){
         playersGameId.forEach(id => {
             // return if player Game id is for this user
             if ( id == this.selfGameId ){ return }
@@ -37,34 +39,98 @@ export default class Enemy
             // create new enemy
             const newEnemy = this.charaterModel.clone()
             this.group.add(newEnemy)
-            this.playersObject[id] = newEnemy
 
+            // we have 3 state on enemy player game info
+            // state : good == ping is less than 100
+            // state : bad  == pnig is less than 500
+            // state : dc   == last gameinfo is more than 500 ms
+            this.playersObject[id] = {
+                model : newEnemy,
+                gameInfo : { 
+                    state : "good",
+                    min : position,
+                    max : position,
+                    oldMax : []
+                }
+            }
         })
     }
     
     playerLeave(playerGameId){
-        this.group.remove(this.playersObject[playerGameId])
+        this.group.remove(this.playersObject[playerGameId].model)
         delete this.playersObject[playerGameId]
     }
     
-    updateGameInfo(gameInfo){
-        this.gameInfo = gameInfo
+    // update position from server
+    updateGameInfo(time ,gameInfo){
+        const timeNow = this.getClock() - 200
+
+        Object.keys(this.playersObject).forEach(id => {
+            if ( id == this.selfGameId ) { return }
+            
+            const playerInfo = this.playersObject[id]
+            const info = gameInfo[id]
+
+            if (info.t >  timeNow ){
+                playerInfo.gameInfo.state = "good"
+                if ( info.t > playerInfo.gameInfo.max.t ){
+                    playerInfo.gameInfo.oldMax.push(playerInfo.gameInfo.max)
+                    playerInfo.gameInfo.max = info
+
+
+                    let smalletsTime = playerInfo.gameInfo.min.t
+                    for (let index = playerInfo.gameInfo.oldMax.length -1 ; index > -1 ; index--) {
+                        if ( timeNow > playerInfo.gameInfo.oldMax[index].t ) {
+                            if (playerInfo.gameInfo.oldMax[index].t > smalletsTime ){
+                                playerInfo.gameInfo.min = playerInfo.gameInfo.oldMax[index]
+                                smalletsTime = playerInfo.gameInfo.oldMax[index].t
+                            } else {
+                                playerInfo.gameInfo.oldMax.splice(index,1)
+                            }
+                        }
+                    }
+                }
+            } else if ( info.t >  timeNow - 400 ){
+                    
+                playerInfo.gameInfo.state = "bad"
+                playerInfo.gameInfo.min = info
+
+            } else {
+                playerInfo.gameInfo.state = "dc"
+                playerInfo.gameInfo.min = info
+            }
+        })
     }
 
     updatePosition(delta){
+        
         if ( !this.isActive ) { return }
-        /**
-         * for smoth movement enemy always
-         * display curent position - 0.1 secend of actuall position 
-         */
 
-        // fix smoth position ----------------------------------------------------------------------
-        // this.moveInfo.push(pos)
 
         Object.keys(this.playersObject).forEach(id => {
-            this.playersObject[id].position.x = this.gameInfo[id].px
-            this.playersObject[id].position.z = this.gameInfo[id].pz
-            this.playersObject[id].rotation.y = this.gameInfo[id].ry
+
+            const player = this.playersObject[id]
+            const min = player.gameInfo.min
+
+            if ( player.gameInfo.state == "good" ){
+                const max = player.gameInfo.max
+                const timeNow = this.getClock() - 200
+
+                // create position base on min max
+                // we deside base on dis formolu => px = p1 + tan(alpha) * deltaT
+                const deltaTC = (timeNow - min.t) / (max.t - min.t)
+
+                player.model.position.x = min.px + ( max.px - min.px ) * deltaTC
+                player.model.position.z = min.pz + ( max.pz - min.pz ) * deltaTC
+                player.model.rotation.y = min.ry + ( max.ry - min.ry ) * deltaTC
+
+            } else {
+                // player disconnect
+                player.model.position.x = min.px
+                player.model.position.z = min.pz
+                player.model.rotation.y = min.ry
+            }
+
         })
     }
 }

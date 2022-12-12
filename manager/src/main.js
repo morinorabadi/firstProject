@@ -9,7 +9,8 @@ const socketStates = {
     connected : false,
 }
 
-window.socket = io("http://localhost:3000")
+window.socket = io("http://159.69.180.15:3000")
+// window.socket = io("http://127.0.0.1:3000")
 
 // connect event
 socket.on("connect", () => {

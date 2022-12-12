@@ -5,6 +5,7 @@ import Renderer from './utils/Renderer';
 import AssetsLoader from './utils/AssetsLoader'
 import Controller from './utils/Controll'
 import Audios from './utils/audio';
+import Clock from './utils/Clock';
 
 import UserCharater from './character/User';
 import Enemy from './character/Enemy'
@@ -18,6 +19,8 @@ class Scene{
             isWorldLoad : false,
             isCharaterLoad : true
         }
+
+        this.clock = new Clock(this.redlibcore)
 
         // create assets loader 
         this.assetLoader = new AssetsLoader()
@@ -37,7 +40,7 @@ class Scene{
             },
             objects : [
                 // charater 3m model 
-                {type : "gltf"   , src : "assets/spaseShip.glb", loadOver : gltf    => {
+                {type : "gltf"   , src : "static/assets/spaseShip.glb", loadOver : gltf    => {
                     this.charaterModel = gltf.scene
                     gltf.scene.children.forEach( mesh => {
 
@@ -58,14 +61,8 @@ class Scene{
                     });
                 }},
                 // spaseShip audio
-                {type : "audio"  , src : "assets/audios/spaseShip.mp3", loadOver : audio   => {
+                {type : "audio"  , src : "static/assets/audios/spaseShip.mp3", loadOver : audio   => {
                     this.spaseShipAudio = audio
-                }},
-                // background audio
-                {type : "audio"  , src : "assets/audios/section1.mp3", loadOver : audio   => {
-                    audio._loop = true;
-                    // audio.play()
-                    audio.volume(0.4)
                 }}
             ]
         })
@@ -89,15 +86,31 @@ class Scene{
                 this.loadChecks.isWorldLoad = true
                 
                 // fix character load chech 
-                socket.emit("load-over",this.charater.playerGameId)
+                socket.emit("load-over", Date.now())
                 
             }
         })
 
+        // show ping and calculate server delay and set global clock
+        this.ping = document.getElementById('ping')
+        this.loopId = setInterval( () => {
+            const now = Date.now()
+            socket.emit("ping", () => {
+                this.ping.textContent = `${Date.now() - now} : ping`
+            })
+        }, 500)
+
+
         // start game event
         socket.on("server-start-game", ( response ) => {
             if ( response.status == 200 ){
-                this.charater.active()
+                // fix this
+                const delay = Date.now() - response.time
+                if ( delay > 200 ) {
+                    console.log("server delay --",delay,"-- on set up was to big");
+                }
+                this.clock.setClock(response.serverTime + delay / 2)
+                this.charater.active( response.position )
                 this.enemys.active()
             }
         })
@@ -105,7 +118,7 @@ class Scene{
         // server on new player join
         socket.on("game-new-player",( response ) => {
             if ( response.status == 200 ){
-                this.enemys.updateEnemys(response.playersGameId)
+                this.enemys.updateEnemys(response.playersGameId,response.position)
             }
         })
 
@@ -126,22 +139,20 @@ class Scene{
         })
 
         // server update game info  
-        socket.on("sugi", (gameInfo) => {
-            this.enemys.updateGameInfo(gameInfo)
+        socket.on("sugi", (time ,gameInfo) => {
+            this.enemys.updateGameInfo(time ,gameInfo)
         })
-
-        
-
     }
+
     loadHandeler(section){
         switch (section) {
             case "charater":
                 // create user charater
-                this.charater = new UserCharater(this.redlibcore,this.charaterModel,this.spaseShipAudio)
+                this.charater = new UserCharater(this.redlibcore,this.charaterModel,this.spaseShipAudio, () => this.clock.getClock() )
                 this.world.scene.add(this.charater.group)
                 
                 // create enemy class
-                this.enemys = new Enemy(this.redlibcore,this.charaterModel)
+                this.enemys = new Enemy(this.redlibcore,this.charaterModel, () => this.clock.getClock() )
                 this.world.scene.add(this.enemys.group)
 
                 // create controller

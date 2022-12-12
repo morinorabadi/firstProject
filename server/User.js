@@ -9,11 +9,14 @@ class User
         
         this.id = uuidv4()
         this.username = null
+        this.playerGameId = null
         this.room = null
 
         // disconnecting event
         this.socket.on("disconnect", () => { this.manager.userDisconnect(this.socket.id) })
-        // this.socket.on("disconnecting", () => { if (this.room) { this.room.leave(this.id) }})
+
+        // add ping event
+        this.socket.on('ping', callback => { callback() })
 
         // add "set-username" event
         this.socket.on("set-username", (username) => {this.setUsername(username)})
@@ -31,7 +34,7 @@ class User
          * Game events
          */
         // load over
-        this.socket.on("load-over", (playerGameId) => { this.room.worldLoadOver(playerGameId) })
+        this.socket.on("load-over", (time) => { this.room.worldLoadOver(this.socket.id, this.playerGameId,time) })
 
         // update game info
         this.socket.on("ugi", (data) => { this.room.updatePlayerInfo(data) })
@@ -82,14 +85,16 @@ class User
             status : 200,
             room : this.room.serialize()
         })
+        this.playerGameId = this.room.generatePlayerId(this.id) 
         this.io.to(this.socket.id).emit("server-create-world",{
             status : 200,
             baseWorldData : this.room.world.baseWorld,
-            playerGameId : this.room.generatePlayerId(this.id)
+            playerGameId : this.playerGameId
         })
     }
 
     roomForceLeave(){
+        this.playerGameId = null
         this.socket.leave(this.room.id)
         this.room = null
         this.manager.addUserIdWithOutRoom(this.socket.id)

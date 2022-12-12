@@ -3,7 +3,7 @@ import { lerp } from 'three/src/math/MathUtils'
 
 export default class UserCharater
 {
-    constructor(redlibcore,charater,audio){
+    constructor(redlibcore,charater,audio, getClock ){
         this.group = new THREE.Group()
         this.isActive = false
 
@@ -30,6 +30,9 @@ export default class UserCharater
         redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
         redlibcore.globalEvent.addCallBack('resize', () => { this.resize() })
 
+        // clock
+        this.getClock = getClock
+        
         // store every inforamtion about move
         this.moveInfo = {
             isActive : false,
@@ -43,7 +46,8 @@ export default class UserCharater
         }
 
     }
-    active(){
+    active(position){
+        this.group.position.x = position.px 
         this.isActive = true
     }
     deactive(){
@@ -70,18 +74,6 @@ export default class UserCharater
 
     // handele input events
     updatePosition(delta){
-        if (this.playerGameId){
-            // send out user position for other player
-            socket.volatile.emit("ugi", { 
-                px : this.group.position.x,
-                pz : this.group.position.z,
-                ry : this.charater.rotation.y,
-                // fix global clock 
-                t  : Date.now(),
-                pi : this.playerGameId
-            })
-        }
-
         // chech if is active
         if (!this.isActive){ return }
 
@@ -100,7 +92,7 @@ export default class UserCharater
             if (  this.moveInfo.speed > 0 ) {
                 // decrese speed for smoth movement
                 this.moveInfo.speed -= delta * 0.00001
-
+                
                 // handele spaseShip audio base on speed
                 this.audio.volume((this.moveInfo.speed * 40) + 0.3)
                 this.audio.rate((this.moveInfo.speed * 40) + 0.8)
@@ -128,5 +120,18 @@ export default class UserCharater
             this.group.position.z += delta * this.moveInfo.speed * direction1.y
 
         }
+
+        if (this.playerGameId){
+            // send out user position for other player
+            socket.volatile.emit("ugi", { 
+                px : this.group.position.x,
+                pz : this.group.position.z,
+                ry : this.charater.rotation.y,
+                // fix global clock 
+                t  : this.getClock() ,
+                pi : this.playerGameId
+            })
+        }
+
     }
 }
