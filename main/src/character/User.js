@@ -3,28 +3,33 @@ import { lerp } from 'three/src/math/MathUtils'
 
 export default class UserCharater
 {
-    constructor(redlibcore,charater,audio, getClock ){
+    constructor(redlibcore,models, getClock ){
         this.group = new THREE.Group()
         this.isActive = false
 
         // charater
-        this.charater = charater 
+        this.charater = models.spaseShip
         this.group.add(this.charater)
         this.playerGameId = null
         // audio
-        this.audio = audio
+        this.audio = models.spaseShipAudio
         this.audio._loop = true
         this.audio.volume(0.3)
         this.audio.rate(0.8)
-        // this.audio.play()
+
+        this.bigSpaseShipAudio = models.bigSpaseShipAudio
+        this.bigSpaseShipAudio._loop = true
+        this.bigSpaseShipAudio.volume(0.2)
+
 
         // setup camera and camera group
         this.cameraGroup = new THREE.Group()
-        this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 1, 200)
+        this.camera = new THREE.PerspectiveCamera(45,window.innerWidth / window.innerHeight, 1, 500)
+        this.cameraGroup.rotation.y = Math.PI / 2 
+        this.camera.position.set(0,18,18)
+        this.camera.lookAt(new THREE.Vector3(0,0,-10))
         this.cameraGroup.add(this.camera)
         this.group.add(this.cameraGroup)
-        this.camera.position.set(0,15,18)
-        this.camera.lookAt(new THREE.Vector3(0,0,0))
         
         // adding process event for update position
         redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
@@ -49,10 +54,14 @@ export default class UserCharater
     active(position){
         this.group.position.x = position.px 
         this.isActive = true
+        this.audio.play()
+        this.bigSpaseShipAudio.play()
     }
     deactive(){
         this.isActive = false
         this.playerGameId = null
+        this.audio.pause()
+        this.bigSpaseShipAudio.pause()
     }
     // handele resize events
     resize(){
@@ -118,6 +127,24 @@ export default class UserCharater
 
             this.group.position.x -= delta * this.moveInfo.speed * direction1.x
             this.group.position.z += delta * this.moveInfo.speed * direction1.y
+
+
+            const distanseToSpaseShip = this.group.position.distanceToSquared(new THREE.Vector3(-70, 0, 0))
+            // console.log(distanseToSpaseShip);
+            if ( distanseToSpaseShip > 10000  ){
+                this.bigSpaseShipAudio.volume(0.2)
+            } else if ( distanseToSpaseShip > 2000 ){
+                // 8000
+                // 1 : 2000 => 0.1 = 10000
+                const volume = 1.2 - (distanseToSpaseShip / 10000)
+                this.bigSpaseShipAudio.volume(volume)
+            } else {
+                this.bigSpaseShipAudio.volume(1)
+            }
+            
+            // sound distanceToSquared 
+            // 10_000 is max 
+            // 2_000 is min
 
         }
 

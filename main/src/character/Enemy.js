@@ -1,17 +1,34 @@
 import * as THREE from 'three'
-import {gsap} from 'gsap'
 
 export default class Enemy
 {
-    constructor(redlibcore, charater, getClock){
+    constructor(redlibcore, models, getClock){
         this.group = new THREE.Group()
-        this.charaterModel = charater.clone()
+        this.group1 = new THREE.Group()
+        this.charaterModel = models.spaseShip.clone()
 
         // clock
         this.getClock = getClock
 
-        redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
+        // add big Spase Ship
+        this.spaseShip = models.bigSpaseShip
+        this.spaseShip.position.y = -5
 
+        this.baloons = new THREE.Group()
+        
+        this.baloon1 = models.baloon.clone()
+        this.baloon1.position.x = 30
+        this.baloons.add(this.baloon1)
+
+        this.baloon2 = models.baloon.clone()
+        this.baloon2.position.x = -30
+        this.baloons.add(this.baloon2)
+
+        this.group1.add(this.spaseShip, this.baloons)
+        this.group1.position.x = -70
+        this.group1.rotation.y = Math.PI / 6
+
+        redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
     }
     
     init(playerGameId){
@@ -106,6 +123,19 @@ export default class Enemy
         
         if ( !this.isActive ) { return }
 
+        const timeNow = this.getClock() - 200
+
+        // rotate big Spase shipModels
+        const positionY =  Math.sin(timeNow / 1000) * 5 
+        const rotationY = delta / 1000
+
+        this.baloons.rotation.y += rotationY / 8
+        this.baloon1.rotation.y  += rotationY
+        this.baloon2.rotation.y  += rotationY
+        this.baloon1.position.y  = positionY - 5
+        this.baloon2.position.y  = positionY - 5
+
+
 
         Object.keys(this.playersObject).forEach(id => {
 
@@ -114,7 +144,6 @@ export default class Enemy
 
             if ( player.gameInfo.state == "good" ){
                 const max = player.gameInfo.max
-                const timeNow = this.getClock() - 200
 
                 // create position base on min max
                 // we deside base on dis formolu => px = p1 + tan(alpha) * deltaT

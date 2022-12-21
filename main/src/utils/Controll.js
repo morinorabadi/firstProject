@@ -31,9 +31,9 @@ export default class Controll
         this.touchInfo = { isActive: false, CurentDrag : null,start : null }
 
         // adding touch events
-        redlibcore.globalEvent.addCallBack('touchStart', (touch) => { this.touchStart(touch) })
-        redlibcore.globalEvent.addCallBack('touchDrag',  (touch) => { this.touchDrag(touch) })
-        redlibcore.globalEvent.addCallBack('touchEnd',   ()      => { this.touchEnd() })
+        // redlibcore.globalEvent.addCallBack('touchStart', (touch) => { this.touchStart(touch) })
+        // redlibcore.globalEvent.addCallBack('touchDrag',  (touch) => { this.touchDrag(touch) })
+        // redlibcore.globalEvent.addCallBack('touchEnd',   ()      => { this.touchEnd() })
         
     }
 

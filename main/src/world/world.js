@@ -2,19 +2,17 @@ import * as THREE from 'three'
 
 export default class World
 {
-    constructor(){
+    constructor(models){
         // main scene
         this.scene = new THREE.Scene()
         
-        // for active events
-        this.isActive = false
 
         // add light to scene
-        const ambientLight = new THREE.AmbientLight("#bdfff0",0.5)
-        const directionalLight = new THREE.DirectionalLight("#fff",0.4)
+        const light =  new THREE.AmbientLight('#fff', 0.8)
+        const directionalLight = new THREE.DirectionalLight("#fff",1.2)
         directionalLight.position.set(1,1,1 )
         
-        this.scene.add(ambientLight,directionalLight)
+        this.scene.add(directionalLight,light)
     }
 
     // generate base world
@@ -27,7 +25,7 @@ export default class World
     // generate world base on server info
     generate(world){
         const worldGroup = new THREE.Group()
-        worldGroup.add(this.generateplanet(world.planets))
+        // worldGroup.add(this.generateplanet(world.planets))
         worldGroup.add(this.generateStar(world.stars))
         worldGroup.position.set(
             world.position.x * 100,

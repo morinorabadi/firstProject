@@ -33,36 +33,36 @@ class Scene{
 
         
         // load charater 3D model
-        this.charaterModel = null
+        this.models = {}
         this.assetLoader.load({
             loadOver : () => {
                 this.loadHandeler('charater')
             },
             objects : [
-                // charater 3m model 
-                {type : "gltf"   , src : "static/assets/spaseShip.glb", loadOver : gltf    => {
-                    this.charaterModel = gltf.scene
-                    gltf.scene.children.forEach( mesh => {
 
-                        // adding material to 3d model 
-                        switch (mesh.name) {
-                            case "black":
-                                mesh.material = new THREE.MeshStandardMaterial({ color : '#222' })
-                                break;
-
-                            case "white":
-                                mesh.material = new THREE.MeshStandardMaterial({ color : '#ccc' })
-                                break;
-
-                            case "blue":
-                                mesh.material = new THREE.MeshStandardMaterial({ color : '#12a4ff' })
-                                break;
-                        }
-                    });
+                {type : "gltf"   , src : "static/assets/models/baloon.glb",       loadOver : gltf    => {
+                    gltf.scene.traverse( child => { if ( child.material ) child.material.metalness = 0; } );
+                    this.models.baloon = gltf.scene
                 }},
+
+                {type : "gltf"   , src : "static/assets/models/bigSpaseShip.glb", loadOver : gltf    => {
+                    gltf.scene.traverse( child => { if ( child.material ) child.material.metalness = 0; } );
+                    this.models.bigSpaseShip = gltf.scene
+                }},
+
+                {type : "gltf"   , src : "static/assets/models/spaseShip.glb",    loadOver : gltf    => {
+                    gltf.scene.traverse( child => { if ( child.material ) child.material.metalness = 0; } );
+                    this.models.spaseShip = gltf.scene
+                }},
+
                 // spaseShip audio
                 {type : "audio"  , src : "static/assets/audios/spaseShip.mp3", loadOver : audio   => {
-                    this.spaseShipAudio = audio
+                    this.models.spaseShipAudio = audio
+                }},
+
+                // big spaseship sound 
+                {type : "audio"  , src : "static/assets/audios/tuesday.mp3", loadOver : audio   => {
+                    this.models.bigSpaseShipAudio = audio
                 }}
             ]
         })
@@ -148,12 +148,13 @@ class Scene{
         switch (section) {
             case "charater":
                 // create user charater
-                this.charater = new UserCharater(this.redlibcore,this.charaterModel,this.spaseShipAudio, () => this.clock.getClock() )
+                this.charater = new UserCharater(this.redlibcore ,this.models, () => this.clock.getClock() )
                 this.world.scene.add(this.charater.group)
-                
+
                 // create enemy class
-                this.enemys = new Enemy(this.redlibcore,this.charaterModel, () => this.clock.getClock() )
+                this.enemys = new Enemy(this.redlibcore,this.models, () => this.clock.getClock() )
                 this.world.scene.add(this.enemys.group)
+                this.world.scene.add(this.enemys.group1)
 
                 // create controller
                 this.controller = new Controller(
