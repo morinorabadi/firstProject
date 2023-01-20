@@ -3,7 +3,10 @@ const http = require('http');
 const {Server} = require('socket.io')
 const path = require("path")
 
-const Manager = require('./Manager')
+// load Config file
+require('dotenv').config({ path: path.join( __dirname, `../../.env.${process.env.NODE_ENV}`)})
+
+const Manager = require('./game/Manager')
 
 
 const app = express()
@@ -26,6 +29,6 @@ io.on('connection', socket => {
 })
 
 
-server.listen(3000,() => {
-    console.log("server is active...");
+server.listen(process.env.PORT,() => {
+    console.log("server is active on port ", process.env.PORT);
 })

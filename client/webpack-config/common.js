@@ -1,12 +1,15 @@
 const path = require("path")
+const fs = require('fs')
+
 const CopyWebpackPlugin = require("copy-webpack-plugin")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
+// load config file
+require('dotenv').config({ path: path.resolve(__dirname,`../../.env.${process.env.NODE_ENV}`) })
 
-const fs = require('fs')
 
-// store version foe expor
+// store version foe export
 let version;
 fs.readFile(path.resolve(__dirname, '../../version.txt'),"utf8",(err,data) => {version = data})
 

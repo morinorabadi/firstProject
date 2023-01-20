@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const WorldGenerator = require('./game/WorldGenerator')
+const WorldGenerator = require('./WorldGenerator')
 
 
 class Room
