@@ -1,46 +1,51 @@
+import { getSocketEvent, socketEmit } from '../connection/Socket'
+import { getRedLibCore } from '../redlibCore/core'
+
 import * as THREE from 'three'
 
 import World from './world/world'
-import Renderer from './utils/Renderer';
+import Renderer from './utils/Renderer'
 import AssetsLoader from './utils/AssetsLoader'
-import Controller from './utils/Controll'
-import Audios from './utils/audio';
-import Clock from './utils/Clock';
 
-import UserCharater from './character/User';
+import Character from './character/3DCharacter'
+
 import Enemy from './character/Enemy'
 
 
-class Scene{
-    constructor(redlibcore){
-        this.redlibcore = redlibcore
+export default class Scene
+{
+  constructor(){
+    console.log("scene constructor");
 
-        this.loadChecks = {
-            isWorldLoad : false,
-            isCharaterLoad : true
-        }
+    const redlibcore = getRedLibCore()
+    const socketEvents = getSocketEvent()
+    
+    let world;
+    let renderer;
+    let character;
+    let enemys;
+    
+    let loadedModels = {}
 
-        this.clock = new Clock(this.redlibcore)
-
-        // create assets loader 
-        this.assetLoader = new AssetsLoader()
-
-        // global Audio Class
-        // this.globalAudio = new Audios(this.assetLoader)
-
-        // creating world
-        this.world = new World(this.assetLoader)
-
+    let isLoadOver = false
+    let isLoadStart = false
+    this.load = ( loadOverCallBack ) => {
         
-        // load charater 3D model
-        this.models = {}
-        this.assetLoader.load({
+        // prevent from multiple load task
+        if ( isLoadStart ){ return }
+        isLoadStart = true
+
+        new AssetsLoader().load({
             loadOver : () => {
-                this.loadHandeler('charater')
+                // load over event
+                isLoadOver = true
+                console.log("load os over in scene");
+                loadOverCallBack()
+
             },
             objects : [
 
-                {type : "gltf"   , src : "static/assets/models/baloon.glb",       loadOver : gltf    => {
+                {type : "gltf"   , src : "assets/models/ballon.glb",       loadOver : gltf    => {
                     gltf.scene.traverse( child => { if ( child.material ) {
                         if( child.material.map ){
                             child.material.map.flipY = false
@@ -49,10 +54,10 @@ class Scene{
                         child.material.metalness = 0
                     } } );
                     
-                    this.models.baloon = gltf.scene
+                    loadedModels.ballon = gltf.scene
                 }},
 
-                {type : "gltf"   , src : "static/assets/models/bigSpaseShip.glb", loadOver : gltf    => {
+                {type : "gltf"   , src : "assets/models/bigSpaceShip.glb", loadOver : gltf    => {
                     gltf.scene.traverse( child => { if ( child.material ) {
                         if( child.material.map ){
                             child.material.map.flipY = false
@@ -61,135 +66,119 @@ class Scene{
                         child.material.metalness = 0
                     } } );
                     
-                    this.models.bigSpaseShip = gltf.scene
+                    loadedModels.bigSpaceShip = gltf.scene
                 }},
 
-                {type : "gltf"   , src : "static/assets/models/spaseShip.glb",    loadOver : gltf    => {
+                {type : "gltf"   , src : "assets/models/spaceShip.glb",    loadOver : gltf    => {
                     gltf.scene.traverse( child => { if ( child.material ) {
                         if( child.material.map ){
                             child.material.map.flipY = false
                         }
                             
                         child.material.metalness = 0
-                    } } );
-                    this.models.spaseShip = gltf.scene
+                    }});
+                    loadedModels.spaceShip = gltf.scene
                 }},
 
-                // spaseShip audio
-                {type : "audio"  , src : "static/assets/audios/spaseShip.mp3", loadOver : audio   => {
-                    this.models.spaseShipAudio = audio
+                // spaceShip audio
+                {type : "audio"  , src : "assets/audios/spaceShip.mp3", loadOver : audio   => {
+                    loadedModels.spaceShipAudio = audio
                 }},
 
-                // big spaseship sound 
-                {type : "audio"  , src : "static/assets/audios/tuesday.mp3", loadOver : audio   => {
-                    this.models.bigSpaseShipAudio = audio
+                // big spaceship sound 
+                {type : "audio"  , src : "assets/audios/tuesday.mp3", loadOver : audio   => {
+                    loadedModels.bigSpaceShipAudio = audio
                 }}
             ]
         })
+    }
 
-        /**
-         * server Setup
-         */
-
-        // generate world
-        socket.on("server-create-world", (respone) => {
-            if ( respone.status == 200 ){
-                // create world
-                this.world.generateBase(respone.baseWorldData)
-
-                // store self playerGameId
-                this.charater.playerGameId = respone.playerGameId
-
-                // create enemys class
-                this.enemys.init(respone.playerGameId)
-
-                this.loadChecks.isWorldLoad = true
-                
-                // fix character load chech 
-                socket.emit("load-over", Date.now())
-                
-            }
+    function waitUntilLoadOver(){
+        let loopId;
+        return new Promise((resolve,_) => {
+            loopId = setInterval(() => {
+                if ( isLoadOver ){
+                    clearInterval(loopId)
+                    resolve()
+                }
+            },100)
         })
+    }
 
-        // show ping and calculate server delay and set global clock
-        this.ping = document.getElementById('ping')
-        this.loopId = setInterval( () => {
-            const now = Date.now()
-            socket.emit("ping", () => {
-                this.ping.textContent = `${Date.now() - now} : ping`
-            })
-        }, 500)
+    // generate world
+    socketEvents.addCallBack("createWorld", async (response) => {
+        console.log("createWorld in scene")
+        if ( response.status == 200 ){
 
+            if (!isInitDone){
+                await waitUntilLoadOver()
+                initScene()
+            }
+
+            // create world
+            world.generateBase(response.baseWorldData)
+
+            // store self playerGameId
+            character.playerGameId = response.playerGameId
+
+            // create enemys class
+            enemys.init(response.playerGameId)
+
+            socketEmit("load-over", Date.now())
+        }
+    })
+
+    let isInitDone = false
+    function initScene() {
+        // prevent from init before loading
+        console.log("load over is ",isLoadOver);
+        if (!isLoadOver){
+            console.error("game init is calling before load over")
+            return
+        }
+
+        // prevent from multiple init
+        if ( isInitDone ){
+            console.error("we cant init scene twice");
+            return
+        }
+        isInitDone = true
+
+        // create world
+        world = new World(redlibcore,loadedModels)
+
+        // create character
+        character = new Character(redlibcore , loadedModels)
+        world.scene.add(character.group)
+
+        // create enemy class
+        enemys = new Enemy(redlibcore, loadedModels)
+        world.scene.add(enemys.group)
+
+        // setup renderer
+        renderer = new Renderer(redlibcore, world.scene, character.camera)
 
         // start game event
-        socket.on("server-start-game", ( response ) => {
-            if ( response.status == 200 ){
-                // fix this
-                const delay = Date.now() - response.time
-                if ( delay > 200 ) {
-                    console.log("server delay --",delay,"-- on set up was to big");
-                }
-                this.clock.setClock(response.serverTime + delay / 2)
-                this.charater.active( response.position )
-                this.enemys.active()
-            }
+        socketEvents.addCallBack("startGame", ( response ) => {
+            document.getElementById('scene').style.display = "block"
+            character.active(response.position)
+            renderer.active()
+            enemys.active()
+            redlibcore.sizes.resize()
         })
 
-        // server on new player join
-        socket.on("game-new-player",( response ) => {
-            if ( response.status == 200 ){
-                this.enemys.updateEnemys(response.playersGameId,response.position)
-            }
-        })
-
-        // game on some player disconnect
-        socket.on("game-player-disconnect",( response ) => {
-            if ( response.status == 200 ){
-                this.enemys.playerLeave(response.playerGameId)
-            }
-        })
-
-        // server room destroyed
-        socket.on("game-room-destroyed",( response )=>{
-            if ( response.status == 200 ){
-                this.charater.deactive()
-                this.enemys.deactive()
-                socket.emit("room-destroyed-done")
-            }
-        })
-
-        // server update game info  
-        socket.on("sugi", (time ,gameInfo) => {
-            this.enemys.updateGameInfo(time ,gameInfo)
-        })
     }
+        
+    // server room destroyed
+    socketEvents.addCallBack("roomDestroyed",( response )=>{
 
-    loadHandeler(section){
-        switch (section) {
-            case "charater":
-                // create user charater
-                this.charater = new UserCharater(this.redlibcore ,this.models, () => this.clock.getClock() )
-                this.world.scene.add(this.charater.group)
+        document.getElementById('scene').style.display = "none"
+        character.deActive()
+        renderer.deActive()
+        enemys.deActive()
+        socketEmit("room-destroyed-done")
+    })
 
-                // create enemy class
-                this.enemys = new Enemy(this.redlibcore,this.models, () => this.clock.getClock() )
-                this.world.scene.add(this.enemys.group)
-                this.world.scene.add(this.enemys.group1)
 
-                // create controller
-                this.controller = new Controller(
-                    this.redlibcore,
-                    (direction) => { this.charater.setDirection(direction) },
-                    () => { this.charater.setDirectionEnd() },
-                )
-                
-                // setup renderer
-                this.renderer = new Renderer(this.redlibcore,this.world.scene,this.charater.camera)
-
-                // chech load
-                this.loadChecks.isCharaterLoad = true
-
-                break;
-        }
-    }
+  }
 }

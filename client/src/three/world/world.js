@@ -2,10 +2,44 @@ import * as THREE from 'three'
 
 export default class World
 {
-    constructor(models){
+    constructor(redlibcore,models){
         // main scene
         this.scene = new THREE.Scene()
         
+        // add big Space Ship
+        const spaceShipGroup = new THREE.Group()
+
+        const spaceShip = models.bigSpaceShip
+        spaceShip.position.y = -5
+
+        const balloons = new THREE.Group()
+        
+        const ballon1 = models.ballon.clone()
+        ballon1.position.x = 30
+        balloons.add(ballon1)
+
+        const ballon2 = models.ballon.clone()
+        ballon2.position.x = -30
+        balloons.add(ballon2)
+
+        spaceShipGroup.add(spaceShip, balloons)
+        spaceShipGroup.position.x = -70
+        spaceShipGroup.rotation.y = Math.PI / 6
+
+        this.scene.add(spaceShipGroup)
+
+        redlibcore.globalEvent.addCallBack('process', (delta, now) => {
+            // rotate big Space shipModels 
+            const positionY =  Math.sin(Date.now() / 1000) * 5 
+            const rotationY = delta / 1000
+
+            balloons.rotation.y += rotationY / 8
+            ballon1.rotation.y  += rotationY
+            ballon2.rotation.y  += rotationY
+            ballon1.position.y  = positionY - 5
+            ballon2.position.y  = positionY - 5
+        })
+
 
         // add light to scene
         const light =  new THREE.AmbientLight('#fff', 0.8)
@@ -25,8 +59,9 @@ export default class World
     // generate world base on server info
     generate(world){
         const worldGroup = new THREE.Group()
-        // worldGroup.add(this.generateplanet(world.planets))
+        worldGroup.add(this.generatePlanet(world.planets))
         worldGroup.add(this.generateStar(world.stars))
+        
         worldGroup.position.set(
             world.position.x * 100,
             0,
@@ -36,7 +71,7 @@ export default class World
     }
 
     // create planets
-    generateplanet(info){
+    generatePlanet(info){
         const planetsGroup = new THREE.Group()
         info.forEach(planetInfo => {
             const planet = new THREE.Mesh( 

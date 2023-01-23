@@ -10,26 +10,20 @@ body
 p
     margin: 0
 
-#toptop
+#root
     width: 100vw
     height: 100vh
     overflow: hidden
+    background: #333
 
-#reactUI,
-#canvasMain
+#app,
+#scene
     position: fixed
     width: 100vw
     height: 100vh
 
-#reactUI
-    z-index: 10
-
-.curtain
-    width: 100vw
-    height: 100vh
-    background: #333
-    z-index: -1
-
+#scene
+    display: none
 
 .form
     position: fixed
@@ -201,3 +195,49 @@ p
     right: 0
 
     z-index: 100
+
+#loading
+    position: fixed
+    
+    border: 16px solid #f3f3f3
+    border-top: 16px solid #3498db
+    border-radius: 50%
+    
+    height: 10vh
+    width: 10vh
+
+    left: calc( 50vw - 5vh )
+    top: 45vh
+
+    animation: spin 2s linear infinite
+
+@keyframes spin 
+  0%  
+    transform: rotate(0deg) 
+  100%  
+    transform: rotate(360deg) 
+
+
+    
+#joy
+    background: #f003
+    position: fixed
+    left: 0
+    
+    .big
+        fill : rgba(0,0,0,0.4)
+    .small
+        fill : rgba(0,0,0,0.6)
+
+#speed
+    background: #0f03
+    position: fixed
+    right: 0
+    top: 0
+
+    circle
+        fill : rgba(0,0,0,0.6)
+    rect
+        fill : rgba(0,0,0,0.4)
+        stroke: #fff9
+        stroke-width: 3px

@@ -7,16 +7,14 @@ const path = require("path")
 require('dotenv').config({ path: path.join( __dirname, `../../.env.${process.env.NODE_ENV}`)})
 
 const Manager = require('./game/Manager')
-
-
 const app = express()
 const server = http.createServer(app)
 
 
-app.use(express.static(path.join(__dirname, '../dist')))
+app.use(express.static(path.join(__dirname, '../../dist')))
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'))
+    res.sendFile(path.join(__dirname, '../../dist/index.html'))
 })
 
 

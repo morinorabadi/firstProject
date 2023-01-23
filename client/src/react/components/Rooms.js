@@ -1,22 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
+import { socketEmit } from '../../connection/Socket'
 
 export default function Rooms({rooms}) {   
     const [ roomName, setRoomName ] = useState('')
 
-    useEffect(() => {
-
-        return () => {
-            socket.off("server-send-all-rooms")
-        }
-    },[])
-
     function createRoom() {
-        socket.emit('create-room',roomName)
+        socketEmit('create-room',roomName)
         setRoomName('')
     }
 
     function joinRoom(roomId) {
-        socket.emit('join-room', roomId)
+        socketEmit('join-room', roomId)
     }
     
     return (

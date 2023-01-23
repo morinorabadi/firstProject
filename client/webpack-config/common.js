@@ -1,12 +1,12 @@
 const path = require("path")
 const fs = require('fs')
 
+// Plugins
 const CopyWebpackPlugin = require("copy-webpack-plugin")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const DotEnvWebpackPlugin = require('dotenv-webpack')
 
-// load config file
-require('dotenv').config({ path: path.resolve(__dirname,`../../.env.${process.env.NODE_ENV}`) })
 
 
 // store version foe export
@@ -17,7 +17,7 @@ fs.readFile(path.resolve(__dirname, '../../version.txt'),"utf8",(err,data) => {v
 fs.readFile(path.resolve(__dirname, '../src/index.html'),"utf8",(err,data) => {fs.writeFile(path.resolve(__dirname,'../../dist/index.html'),data.replace(/Version/g, version),()=>{})})
 
 module.exports = {
-    entry : "./src/main.js",
+    entry : "./src/index.js",
     output : {
         filename : ()=> { return `bundle${version}.js` },
         path : path.resolve(__dirname, '../../dist')
@@ -30,7 +30,8 @@ module.exports = {
             }
         ]}),
         new HtmlWebpackPlugin({ template : './src/index.html' }),
-        new MiniCssExtractPlugin()
+        new MiniCssExtractPlugin(),
+        new DotEnvWebpackPlugin({ path : path.resolve(__dirname,`../../.env.${process.env.NODE_ENV}`) })
     ],
     module : {
         rules : [

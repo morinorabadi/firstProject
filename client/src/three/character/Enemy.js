@@ -1,165 +1,208 @@
 import * as THREE from 'three'
-
+import { lerp } from 'three/src/math/MathUtils'
+import { getSocketEvent } from '../../connection/Socket' 
 export default class Enemy
 {
-    constructor(redlibcore, models, getClock){
-        this.group = new THREE.Group()
-        this.group1 = new THREE.Group()
-        this.charaterModel = models.spaseShip.clone()
+  constructor(redlibcore, models){
 
-        // clock
-        this.getClock = getClock
+    this.group = new THREE.Group()
 
-        // add big Spase Ship
-        this.spaseShip = models.bigSpaseShip
-        this.spaseShip.position.y = -5
-
-        this.baloons = new THREE.Group()
-        
-        this.baloon1 = models.baloon.clone()
-        this.baloon1.position.x = 30
-        this.baloons.add(this.baloon1)
-
-        this.baloon2 = models.baloon.clone()
-        this.baloon2.position.x = -30
-        this.baloons.add(this.baloon2)
-
-        this.group1.add(this.spaseShip, this.baloons)
-        this.group1.position.x = -70
-        this.group1.rotation.y = Math.PI / 6
-
-        redlibcore.globalEvent.addCallBack('process', (delta) => { this.updatePosition(delta) })
-    }
-    
-    init(playerGameId){
-        this.selfGameId = playerGameId
+    let selfGameId = null
+    let playersObject = null
+    this.init = (playerGameId) => {
+        selfGameId = playerGameId
+        playersObject = {}
         this.group.clear()
-        this.playersObject = {}
     }
 
-    active(){
-        this.isActive = true
-    }
 
-    deactive(){
-        this.isActive = false
-    }
+    // active
+    let isActive = false
+    this.active = () => { isActive = true }
+    this.deActive = () => { isActive = false }
+
+    /**
+     * listen to socket event
+     */
+    const event = getSocketEvent()
+
+    //! move this event to enemy class
+    // server on new player join
+    // socket.on("game-new-player",( response ) => {
+    //     if ( response.status == 200 ){
+    //         this.enemys.updateEnemys(response.playersGameId,response.position)
+    //     }
+    // })
     
-    updateEnemys(playersGameId,position){
-        playersGameId.forEach(id => {
-            // return if player Game id is for this user
-            if ( id == this.selfGameId ){ return }
+    // game on some player disconnect
+    // socketEvents.addCallBack("playerLeft", player => {
+    //     this.enemys.playerLeave(response.playerGameId)
+    // })
 
-            // return if player Game id already exsit
-            else if ( this.playersObject[id] ){ return }
+    // server update game info  
+    // socketEvents.addCallBack("sugi", (time ,gameInfo) => {
+    //     this.enemys.updateGameInfo(time ,gameInfo)
+    // })
+    // new player join
+    event.addCallBack('updateEnemy',(playersInfo) => {
+        Object.keys(playersInfo).forEach(gameId => {
+            // return if player Game id is for this user
+            if ( gameId == selfGameId ){ return }
+
+            // return if player Game id already exist
+            else if ( playersObject[gameId] ){ return }
 
             // create new enemy
-            const newEnemy = this.charaterModel.clone()
+            const newEnemy = models.spaceShip.clone()
             this.group.add(newEnemy)
 
             // we have 3 state on enemy player game info
             // state : good == ping is less than 100
-            // state : bad  == pnig is less than 500
-            // state : dc   == last gameinfo is more than 500 ms
-            this.playersObject[id] = {
+            // state : bad  == ping is less than 500
+            // state : dc   == last gameInfo is more than 500 ms
+            playersObject[gameId] = {
                 model : newEnemy,
-                gameInfo : { 
-                    state : "good",
-                    min : position,
-                    max : position,
-                    oldMax : []
+                state : "new", // "good" | "bad" | "dc" | "new"
+                gameInfos : [playersInfo[gameId]],
+            }
+            setTimeout(() => {
+                if (playersObject[gameId]){
+                playersObject[gameId].state = "bad"
                 }
+            }, 1000)
+        })
+    })
+
+    // some player left 
+    event.addCallBack('playerLeft', (player) => {
+        console.log("player left");
+        console.log(player)
+        const { playerGameId } = player
+        this.group.remove(playersObject[playerGameId].model)
+        delete playersObject[playerGameId]
+    })
+
+    /**
+     * enemy position predict
+     */
+
+    const interpolationTime = 200
+    const badConnectionTime = 500
+
+
+    // handel information came from server game loop
+    event.addCallBack('updateGameInfo',(gameInfo) => {
+        Object.keys( playersObject ).forEach(id => {
+            if ( id == selfGameId ) { return }
+            
+            const playerObject = playersObject[id]
+            const serverInfo = gameInfo[id]
+
+            // check is this state is updated
+            if (playerObject.gameInfos[playerObject.gameInfos.length -1 ].t < serverInfo.t){
+                // if it is added to gameInfos array
+                playerObject.gameInfos.push(serverInfo)
             }
         })
-    }
-    
-    playerLeave(playerGameId){
-        this.group.remove(this.playersObject[playerGameId].model)
-        delete this.playersObject[playerGameId]
-    }
-    
-    // update position from server
-    updateGameInfo(time ,gameInfo){
-        const timeNow = this.getClock() - 200
+    })
 
-        Object.keys(this.playersObject).forEach(id => {
-            if ( id == this.selfGameId ) { return }
-            
-            const playerInfo = this.playersObject[id]
-            const info = gameInfo[id]
+    redlibcore.globalEvent.addCallBack('process', (delta, now) => {
+        if (!isActive){return}
 
-            if (info.t >  timeNow ){
-                playerInfo.gameInfo.state = "good"
-                if ( info.t > playerInfo.gameInfo.max.t ){
-                    playerInfo.gameInfo.oldMax.push(playerInfo.gameInfo.max)
-                    playerInfo.gameInfo.max = info
+        Object.keys( playersObject ).forEach(id => {
+            const player = playersObject[id]
 
+            if ( player.state == "new" ){ 
+                return
+            }
 
-                    let smalletsTime = playerInfo.gameInfo.min.t
-                    for (let index = playerInfo.gameInfo.oldMax.length -1 ; index > -1 ; index--) {
-                        if ( timeNow > playerInfo.gameInfo.oldMax[index].t ) {
-                            if (playerInfo.gameInfo.oldMax[index].t > smalletsTime ){
-                                playerInfo.gameInfo.min = playerInfo.gameInfo.oldMax[index]
-                                smalletsTime = playerInfo.gameInfo.oldMax[index].t
-                            } else {
-                                playerInfo.gameInfo.oldMax.splice(index,1)
-                            }
-                        }
+            const renderTime = now - interpolationTime
+            const badStateTime = now - badConnectionTime
+
+            const lastGameInfo = player.gameInfos[player.gameInfos.length -1]
+
+            if ( lastGameInfo.t > renderTime ){
+                // update state
+                player.state = "good"
+
+                // save future position
+                const future = lastGameInfo
+                let nearest;
+
+                // find closet gameInfo to renderTime
+                let founded = false
+                for (let index = player.gameInfos.length -1; index > -1; index-- ){
+                    if (player.gameInfos[index].t < renderTime && !founded ){
+                        founded = true
+                        nearest = player.gameInfos[index]
+                    } else
+                    // clear old states
+                    if (player.gameInfos[index].t < renderTime - 500 ){
+                        player.gameInfos.splice(index,1)
                     }
                 }
-            } else if ( info.t >  timeNow - 400 ){
-                    
-                playerInfo.gameInfo.state = "bad"
-                playerInfo.gameInfo.min = info
 
-            } else {
-                playerInfo.gameInfo.state = "dc"
-                playerInfo.gameInfo.min = info
+                // update model position
+                const LerpValue = (renderTime - nearest.t) / (future.t - nearest.t)
+                player.model.position.x = lerp(nearest.px, future.px, LerpValue)
+                player.model.position.y = lerp(nearest.py, future.py, LerpValue)
+                player.model.position.z = lerp(nearest.pz, future.pz, LerpValue)
+                player.model.rotation.y = lerp(nearest.ry, future.ry, LerpValue)
+
+            } else
+            // state is bad package time is less than render time
+            if ( lastGameInfo.t > badStateTime ) {
+                // update state
+                player.state = "bad"
+
+                // save nearest position
+                const nearest = lastGameInfo
+                let closest = null
+                const nearestTime = nearest.t
+                // find closet gameInfo to nearest that time is less than 100 ms
+                let founded = false
+                for (let index = player.gameInfos.length -1; index > -1; index-- ){
+                    if (player.gameInfos[index].t < nearestTime - 100 && !founded ){
+                        founded = true
+                        closest = player.gameInfos[index]
+                    } else
+                    // clear old states
+                    if (player.gameInfos[index].t < renderTime - badConnectionTime ){
+                        player.gameInfos.splice(index,1)
+                    }
+                }
+
+                // player.model.position.x = ax +c => 
+                // a = (nearest.x - closest.x) /  (nearest.t - closest.t)
+                // renderPosition = a ( renderTime - nearestTime ) + nearestPosition
+                player.model.position.x = (nearest.px - closest.px) /  (nearest.t - closest.t) * (renderTime - nearest.t ) + nearest.px
+                player.model.position.y = (nearest.py - closest.py) /  (nearest.t - closest.t) * (renderTime - nearest.t ) + nearest.py
+                player.model.position.z = (nearest.pz - closest.pz) /  (nearest.t - closest.t) * (renderTime - nearest.t ) + nearest.pz
+                player.model.rotation.y = (nearest.ry - closest.ry) /  (nearest.t - closest.t) * (renderTime - nearest.t ) + nearest.ry
+
+            }
+            // state is disconnected and player don't update his position last 400 ms
+            else {
+                // update state
+                player.state = "dc"
+
+                // set newest position
+                player.model.position.x = lastGameInfo.px
+                player.model.position.y = lastGameInfo.py
+                player.model.position.z = lastGameInfo.pz
+                player.model.rotation.y = lastGameInfo.ry
+                
+
+                // clear useless gameInfos
+                const lastPlayerGameInfoIndex = player.gameInfos.length -1
+                for (let index = lastPlayerGameInfoIndex; index > -1; index-- ){
+                    if ( index !== lastPlayerGameInfoIndex){
+                        player.gameInfos.splice(index,1)
+                    }
+                }
             }
         })
-    }
+    })
 
-    updatePosition(delta){
-        
-        if ( !this.isActive ) { return }
-
-        const timeNow = this.getClock() - 200
-
-        // rotate big Spase shipModels
-        const positionY =  Math.sin(timeNow / 1000) * 5 
-        const rotationY = delta / 1000
-
-        this.baloons.rotation.y += rotationY / 8
-        this.baloon1.rotation.y  += rotationY
-        this.baloon2.rotation.y  += rotationY
-        this.baloon1.position.y  = positionY - 5
-        this.baloon2.position.y  = positionY - 5
-
-
-
-        Object.keys(this.playersObject).forEach(id => {
-
-            const player = this.playersObject[id]
-            const min = player.gameInfo.min
-
-            if ( player.gameInfo.state == "good" ){
-                const max = player.gameInfo.max
-
-                // create position base on min max
-                // we deside base on dis formolu => px = p1 + tan(alpha) * deltaT
-                const deltaTC = (timeNow - min.t) / (max.t - min.t)
-
-                player.model.position.x = min.px + ( max.px - min.px ) * deltaTC
-                player.model.position.z = min.pz + ( max.pz - min.pz ) * deltaTC
-                player.model.rotation.y = min.ry + ( max.ry - min.ry ) * deltaTC
-
-            } else {
-                // player disconnect
-                player.model.position.x = min.px
-                player.model.position.z = min.pz
-                player.model.rotation.y = min.ry
-            }
-
-        })
-    }
+  }
 }

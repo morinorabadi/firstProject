@@ -52,6 +52,7 @@ class Room
         this.gameInfo[playerGameId] = {
             px : Number(playerGameId) * 3,
             pz : 0,
+            py : 0,
             ry : 0,
             t : Date.now(),
             pi : playerGameId
@@ -73,8 +74,7 @@ class Room
         } else {
             this.io.to(this.id).emit("game-new-player", {
                 status : 200,
-                playersGameId : Object.keys(this.playersGameId),
-                position: this.gameInfo[playerGameId]
+                playersGameId : this.gameInfo,
             })
         }
     }
@@ -84,17 +84,17 @@ class Room
 
         // store loop id to remove after game over
         this.loopId = setInterval( () => {
-            // send out playrs information
-            // becuse server emit is realiable we
+            // send out players information
+            // because server emit is reliable we
             // send position on 20 fps 
-            this.io.to(this.id).emit("sugi", Date.now(), this.gameInfo)
+            this.io.to(this.id).emit("sugi", this.gameInfo)
         },25)
     }
 
     // 
-    updatePlayerInfo(data){        
+    updatePlayerInfo(data){
         if ( data.t > this.gameInfo[data.pi].t ) {
-            this.gameInfo[data.pi] = data // pi stand for "player id"
+            this.gameInfo[data.pi] = data // pi stand for "player game id"
         }
     }
 

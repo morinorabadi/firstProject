@@ -3,28 +3,29 @@ import * as THREE from 'three'
 export default class Renderer
 {
     constructor(redlibcore,scene,camera){
-        // store params
-        this.scene = scene
-        this.camera = camera
 
-        // setup rendere
-        this.renderer = new THREE.WebGLRenderer({canvas : document.getElementById('canvasMain')})
-        this.renderer.setSize(window.innerWidth,window.innerHeight)
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-        this.renderer.setClearColor(new THREE.Color("#111"))
+        this.isActive = false
+
+        // setup renderer
+        const renderer = new THREE.WebGLRenderer({canvas : document.getElementById('scene')})
+        renderer.setSize(window.innerWidth,window.innerHeight)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        renderer.setClearColor(new THREE.Color("#111"))
 
         // add events
-        redlibcore.globalEvent.addCallBack("process", () => {this.render()})
-        redlibcore.globalEvent.addCallBack("resize", (sizes) => {this.resize(sizes)})
+        redlibcore.globalEvent.addCallBack("process", () => {
+            if (this.isActive){
+                renderer.render(scene,camera)
+            }
+        },0)
+        redlibcore.globalEvent.addCallBack("resize", (sizes) => {
+            renderer.setSize(window.innerWidth, window.innerHeight)
+        })
     }
-
-    // handele resize event
-    resize(sizes){
-        this.renderer.setSize(window.innerWidth, window.innerHeight)
+    active(){
+        this.isActive = true
     }
-
-    // render function
-    render(){
-        this.renderer.render(this.scene,this.camera)
+    deActive(){
+        this.isActive = false
     }
 }

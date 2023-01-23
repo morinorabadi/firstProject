@@ -41,13 +41,12 @@ class Manager
 
                     // tell other user in this room about room destroyed 
                     this.io.to(room.id).emit("server-room-destroyed", {status : 200})
-                    this.io.to(room.id).emit("game-room-destroyed", {status : 200})
                     
                     // console log some info
                     console.log(`"${ user.username }" destroyed the "${room.name}" room`);
 
                     // clean up room
-                    this.rooms = this.rooms.filter( managerroom =>  managerroom.id !== room.id )
+                    this.rooms = this.rooms.filter( managerRoom =>  managerRoom.id !== room.id )
 
                     console.log("\n\n\n\n\n",this.rooms.length);
                     // update users room info
@@ -65,15 +64,10 @@ class Manager
                     // update ui room info
                     room.updateUiRoomInfo()
 
-                    // emit player disconnet to others ui in room
+                    // emit player disconnect to others ui in room
                     this.io.to(room.id).emit("server-player-disconnect", {
                         status : 200,
-                        player: room.players[playerIdIndex].serialize()
-                    })
-                    // emit player disconnet to others game in room
-                    this.io.to(room.id).emit("game-player-disconnect", {
-                        status : 200,
-                        playerGameId : playerGameId,
+                        player: {playerGameId, ...room.players[playerIdIndex].serialize()}
                     })
 
                     // console log some info

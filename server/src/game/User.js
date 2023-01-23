@@ -37,7 +37,7 @@ class User
         this.socket.on("load-over", (time) => { this.room.worldLoadOver(this.socket.id, this.playerGameId,time) })
 
         // update game info
-        this.socket.on("ugi", (data) => { this.room.updatePlayerInfo(data) })
+        this.socket.on("game-info", (data) => { this.room.updatePlayerInfo(data) })
 
         // room-destroyed-done
         this.socket.on("room-destroyed-done", () => { this.roomForceLeave() })
@@ -45,7 +45,7 @@ class User
     }
     // send back error
     sendError(status, message){
-        this.io.to(this.socket.id).emit('server-error',{status,message})
+        this.socket.emit('server-error',{status,message})
     }
     // set username
     setUsername(username){
@@ -53,7 +53,7 @@ class User
             this.username = username
             this.manager.addUserIdWithOutRoom(this.socket.id)
             this.manager.updateAllRoomsInfo()
-            this.io.to(this.socket.id).emit('server-username-set',{
+            this.socket.emit('server-username-set',{
                 status : 200,
                 username : username
             })
@@ -81,13 +81,10 @@ class User
     }
 
     activeRoom(){
-        this.io.to(this.socket.id).emit("server-active-room",{
-            status : 200,
-            room : this.room.serialize()
-        })
         this.playerGameId = this.room.generatePlayerId(this.id) 
-        this.io.to(this.socket.id).emit("server-create-world",{
+        this.socket.emit("server-active-room",{
             status : 200,
+            room : this.room.serialize(),
             baseWorldData : this.room.world.baseWorld,
             playerGameId : this.playerGameId
         })

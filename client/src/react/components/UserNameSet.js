@@ -1,11 +1,12 @@
 import React, { useState } from "react";
+import { socketEmit } from '../../connection/Socket'
 
 export default function Form() {
   const [text, setText] = useState("");
 
   function submit(e){
     e.preventDefault()
-    socket.emit('set-username', text)
+    socketEmit('set-username', text)
     setText('')
   }
 

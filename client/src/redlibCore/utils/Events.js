@@ -45,13 +45,20 @@
         this.callBacks[eventName] = this.callBacks[eventName].filter( object => object.id !== id)
     }
     // call event with name and with or without parameters
-    callEvent(eventName,parameters = null)
+    callEvent(eventName,parameters = null, parametersTwo=null)
     {   
         if (parameters){
-            for (let event of this.callBacks[eventName])
-            {
-                event.callBack(parameters)
-            } 
+            if (parametersTwo){
+                for (let event of this.callBacks[eventName])
+                {
+                    event.callBack(parameters,parametersTwo)
+                } 
+            } else {
+                for (let event of this.callBacks[eventName])
+                {
+                    event.callBack(parameters)
+                } 
+            }
         } else {
             for (let event of this.callBacks[eventName])
             {

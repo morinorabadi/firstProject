@@ -5,6 +5,7 @@ export default class Clock{
 
       this.start = Date.now();
       this.current = this.start;
+      this.timeNow = Date.now()
       this.elaped = 0;
       this.lastFramecalled = this.start+this.rfps;
   
@@ -23,14 +24,15 @@ export default class Clock{
       window.requestAnimationFrame(() => 
       {
         this.process();
-      });
+      })
   
       if ( this.lastFramecalled < this.current)
       {
         const delta = this.current + this.rfps - this.lastFramecalled
         this.lastFramecalled = this.current + this.rfps;
         this.elaped += delta
-        this.events.callEvent("process",delta)
+        this.timeNow += delta
+        this.events.callEvent("process",delta,this.timeNow)
       }
-    }
   }
+}
